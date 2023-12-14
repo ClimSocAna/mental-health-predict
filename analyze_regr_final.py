@@ -284,113 +284,86 @@ def merge_export_tabs(lrestab, lfitab, missings):
 
 mtab = merge_export_tabs(restab.copy(), fitab.copy(), X.isnull().mean(0))
 
-def counterfactualSim(multimodel, lX, intervention):
-    basepred = multimodel.predict(lX)
+def counterfactualSim(multimodel, lX, intervention, level):
     if intervention == 'exercise':
-        targeted = lX['FCPHEX00']<-3
-        lX.loc[targeted,'FCPHEX00']= lX.loc[targeted,'FCPHEX00']+1
-        lX.loc[targeted,'Mean_Accelerometer']=lX.loc[targeted,'Mean_Accelerometer']+30
-    if intervention == 'exercise_plus':
-        targeted = lX['FCPHEX00']<-3
-        lX.loc[targeted,'FCPHEX00']= lX.loc[targeted,'FCPHEX00']+1
-        lX.loc[targeted,'FCORGA00']= lX.loc[targeted,'FCORGA00']+2
-        lX.loc[lX['FCORGA00']>-1,'FCORGA00']= -1
-        lX.loc[targeted,'Mean_Accelerometer']=lX.loc[targeted,'Mean_Accelerometer']+30
-        lX.loc[targeted,'FPEER']= lX.loc[targeted,'FPEER']-2
-        lX.loc[lX['FPEER']<0,'FPEER']= 0
-        lX.loc[targeted,'FCSTFR0A']= lX.loc[targeted,'FCSTFR0A']+1
-        lX.loc[lX['FCSTFR0A']>-1,'FCSTFR0A']= -1
-    if intervention == 'ses_misstarget':
-        targeted=lX['FOEDE000']>np.nanquantile(lX['FOEDE000'],0.75)
-        lX.loc[targeted,'FOEDE000']=lX.loc[targeted,'FOEDE000']+115
-        lX.loc[targeted,'FCSTYU00']=lX.loc[targeted,'FCSTYU00']+20
-        lX.loc[lX['FCSTYU00']>100,'FCSTYU00']= 100
-        lX.loc[targeted,'FCSTYY00']=lX.loc[targeted,'FCSTYY00']+30
-        lX.loc[lX['FCSTYY00']>100,'FCSTYY00']= 100
-    if intervention == 'ses':
-        targeted=lX['FOEDE000']<np.nanquantile(lX['FOEDE000'],0.25)
-        lX.loc[targeted,'FOEDE000']=lX.loc[targeted,'FOEDE000']+115
-        lX.loc[targeted,'FCSTYU00']=lX.loc[targeted,'FCSTYU00']+20
-        lX.loc[lX['FCSTYU00']>100,'FCSTYU00']= 100
-        lX.loc[targeted,'FCSTYY00']=lX.loc[targeted,'FCSTYY00']+30
-        lX.loc[lX['FCSTYY00']>100,'FCSTYY00']= 100
-    if intervention == 'ses_plus':
-        targeted=lX['FOEDE000']<np.nanquantile(lX['FOEDE000'],0.25)
-        lX.loc[targeted,'FOEDE000']=lX.loc[targeted,'FOEDE000']+115
-        lX.loc[targeted,'FCSTYU00']=lX.loc[targeted,'FCSTYU00']+20
-        lX.loc[lX['FCSTYU00']>100,'FCSTYU00']= 100
-        lX.loc[targeted,'FCSTYY00']=lX.loc[targeted,'FCSTYY00']+30
-        lX.loc[lX['FCSTYY00']>100,'FCSTYY00']= 100
-        lX.loc[targeted,'FCCINE00']=lX.loc[targeted,'FCCINE00']+1
-        lX.loc[lX['FCCINE00']>-1,'FCCINE00']= -1
-        lX.loc[targeted,'FCSPOR00']=lX.loc[targeted,'FCSPOR00']+1
-        lX.loc[lX['FCSPOR00']>-1,'FCSPOR00']= -1
-        lX.loc[targeted,'FDKESSLf']=lX.loc[targeted,'FDKESSLf']-3
-        lX.loc[lX['FDKESSLf']<0,'FDKESSLf']= 0
-        lX.loc[targeted,'FDKESSLm']=lX.loc[targeted,'FDKESSLm']-3
-        lX.loc[lX['FDKESSLm']<0,'FDKESSLm']= 0
-    if intervention == 'ses_plus_misstarget':
-        targeted=lX['FOEDE000']>np.nanquantile(lX['FOEDE000'],0.75)
-        lX.loc[targeted,'FOEDE000']=lX.loc[targeted,'FOEDE000']+115
-        lX.loc[targeted,'FCSTYU00']=lX.loc[targeted,'FCSTYU00']+20
-        lX.loc[lX['FCSTYU00']>100,'FCSTYU00']= 100
-        lX.loc[targeted,'FCSTYY00']=lX.loc[targeted,'FCSTYY00']+30
-        lX.loc[lX['FCSTYY00']>100,'FCSTYY00']= 100
-        lX.loc[targeted,'FCCINE00']=lX.loc[targeted,'FCCINE00']+1
-        lX.loc[lX['FCCINE00']>-1,'FCCINE00']= -1
-        lX.loc[targeted,'FCSPOR00']=lX.loc[targeted,'FCSPOR00']+1
-        lX.loc[lX['FCSPOR00']>-1,'FCSPOR00']= -1
-        lX.loc[targeted,'FDKESSLf']=lX.loc[targeted,'FDKESSLf']-3
-        lX.loc[lX['FDKESSLf']<0,'FDKESSLf']= 0
-        lX.loc[targeted,'FDKESSLm']=lX.loc[targeted,'FDKESSLm']-3
-        lX.loc[lX['FDKESSLm']<0,'FDKESSLm']= 0
+        if level == 0:
+            lX['FCPHEX00']= lX['FCPHEX00'].quantile(1)
+            lX['Mean_Accelerometer']=lX['Mean_Accelerometer'].quantile(1)
+        if level == 1:
+            lX['FCPHEX00']= lX['FCPHEX00'].quantile(2/3)
+            lX['Mean_Accelerometer']=lX['Mean_Accelerometer'].quantile(2/3)
+        if level == 2:
+            lX['FCPHEX00']= lX['FCPHEX00'].quantile(1/3)
+            lX['Mean_Accelerometer']=lX['Mean_Accelerometer'].quantile(1/3)
+        if level == 3:
+            lX['FCPHEX00']= lX['FCPHEX00'].quantile(0)
+            lX['Mean_Accelerometer']=lX['Mean_Accelerometer'].quantile(0)
     if intervention == 'some':
-        screentime=lX['FCSOME00']/7+lX['FCTVHO00']+lX['FCCOMH00']
-        targeted=screentime>np.nanquantile(screentime,0.75)        
-        lX.loc[targeted,'FCSOME00']= lX.loc[targeted,'FCSOME00']-1
-        lX.loc[lX['FCSOME00']<1,'FCSOME00']= 1
-        lX.loc[targeted,'FCTVHO00']= lX.loc[targeted,'FCTVHO00']-1
-        lX.loc[lX['FCTVHO00']<1,'FCTVHO00']= 1
-        lX.loc[targeted,'FCCOMH00']= lX.loc[targeted,'FCCOMH00']-1
-        lX.loc[lX['FCCOMH00']<1,'FCCOMH00']= 1
-    if intervention == 'some_plus':
-        screentime=lX['FCSOME00']/7+lX['FCTVHO00']+lX['FCCOMH00']
-        targeted=screentime>np.nanquantile(screentime,0.75)        
-        lX.loc[targeted,'FCSOME00']= lX.loc[targeted,'FCSOME00']-1
-        lX.loc[lX['FCSOME00']<1,'FCSOME00']= 1
-        lX.loc[targeted,'FCTVHO00']= lX.loc[targeted,'FCTVHO00']-1
-        lX.loc[lX['FCTVHO00']<1,'FCTVHO00']= 1
-        lX.loc[targeted,'FCCOMH00']= lX.loc[targeted,'FCCOMH00']-1
-        lX.loc[lX['FCCOMH00']<1,'FCCOMH00']= 1
-        lX['FCBTNG00']=lX['FCBTNG00']-1
-        lX.loc[lX['FCBTNG00']<-4,'FCBTNG00']= -4
-        lX['FCCYBU00']=lX['FCCYBU00']-1
-        lX.loc[lX['FCCYBU00']<-6,'FCCYBU00']= -6       
-        lX['FCWYLK00']=lX['FCWYLK00']+1
-        lX.loc[lX['FCWYLK00']>-1,'FCWYLK00']= -1
-        lX.loc[targeted,'FCSTFR0A']= lX.loc[targeted,'FCSTFR0A']+1
-        lX.loc[lX['FCSTFR0A']>-1,'FCSTFR0A']= -1
-        lX.loc[targeted,'FCMDSJ00']= lX.loc[targeted,'FCMDSJ00']-1
-        lX.loc[lX['FCMDSJ00']<1,'FCMDSJ00']= 1
-        lX['FPEER']= lX['FPEER']-1
-        lX.loc[lX['FPEER']<0,'FPEER']= 0
-        lX.loc[targeted,'FCSLLN00']= lX.loc[targeted,'FCSLLN00']-1
-        lX.loc[lX['FCSLLN00']<1,'FCSLLN00']= 1
-        lX.loc[targeted,'FCSLTR00']= lX.loc[targeted,'FCSLTR00']-1
-        lX.loc[lX['FCSLTR00']<-6,'FCSLTR00']= -6
+       if level == 0:
+           lX['FCSOME00']= lX['FCSOME00'].quantile(0)
+           lX['FCTVHO00']= lX['FCTVHO00'].quantile(0)
+           lX['FCCOMH00']= lX['FCCOMH00'].quantile(0)
+       if level == 1:
+           lX['FCSOME00']= lX['FCSOME00'].quantile(1/3)
+           lX['FCTVHO00']= lX['FCTVHO00'].quantile(1/3)
+           lX['FCCOMH00']= lX['FCCOMH00'].quantile(1/3)
+       if level == 2:
+           lX['FCSOME00']= lX['FCSOME00'].quantile(2/3)
+           lX['FCTVHO00']= lX['FCTVHO00'].quantile(2/3)
+           lX['FCCOMH00']= lX['FCCOMH00'].quantile(2/3)
+       if level == 3:
+           lX['FCSOME00']= lX['FCSOME00'].quantile(1)
+           lX['FCTVHO00']= lX['FCTVHO00'].quantile(1)
+           lX['FCCOMH00']= lX['FCCOMH00'].quantile(1)
+    if intervention == 'peer':
+        if level == 0:
+            lX['FPEER']= lX['FPEER'].quantile(0)
+            lX['FCNCLS00']= lX['FCNCLS00'].quantile(0)
+            lX['FCFRNS00']= lX['FCFRNS00'].quantile(1)
+            lX['FCTRSS00']= lX['FCTRSS00'].quantile(1)
+        if level == 1:
+            lX['FPEER']= lX['FPEER'].quantile(1/3)
+            lX['FCNCLS00']= lX['FCNCLS00'].quantile(1/3)
+            lX['FCFRNS00']= lX['FCFRNS00'].quantile(2/3)
+            lX['FCTRSS00']= lX['FCTRSS00'].quantile(2/3)
+        if level == 2:
+            lX['FPEER']= lX['FPEER'].quantile(2/3)
+            lX['FCNCLS00']= lX['FCNCLS00'].quantile(2/3)
+            lX['FCFRNS00']= lX['FCFRNS00'].quantile(1/3)
+            lX['FCTRSS00']= lX['FCTRSS00'].quantile(1/3)
+        if level == 3:
+            lX['FPEER']= lX['FPEER'].quantile(1)
+            lX['FCNCLS00']= lX['FCNCLS00'].quantile(1)
+            lX['FCFRNS00']= lX['FCFRNS00'].quantile(0)
+            lX['FCTRSS00']= lX['FCTRSS00'].quantile(0)
     intpred = multimodel.predict(lX)
-    return basepred, intpred, targeted
+    return intpred
 
 # Compute simulated intervention effects based on list with trained nonlinear
 # models
-inters=['exercise', 'exercise_plus', 'ses', 'ses_plus', 'ses_misstarget', 'ses_plus_misstarget', 'some', 'some_plus']
-interrestab=pd.DataFrame(index=inters,columns=['d','p'])
+inters=['exercise', 'some', 'peer']
+interrestab=pd.DataFrame(index=inters,columns=range(4))
 for i in inters:
-    all_basepreds=pd.DataFrame(index=y.index,columns=range(len(gbm_final)))
-    all_intpreds=pd.DataFrame(index=y.index,columns=range(len(gbm_final)))
-    for m in range(len(gbm_final)):
-        basepred, intpred, targeted = counterfactualSim(gbm_final[m], X.copy(), i)
-        all_basepreds[m]=basepred
-        all_intpreds[m]=intpred
-    interrestab.at[i,'p']=stats.ttest_1samp(all_basepreds.loc[targeted,:].mean(1)-all_intpreds[targeted].mean(1), 0)[1]
-    interrestab.at[i,'d']=compute_effsize(all_basepreds.loc[targeted,:].mean(1), all_intpreds[targeted].mean(1), paired=True)
+    for l in range(4):
+        all_intpreds=pd.DataFrame(index=y.index,columns=range(len(gbm_final)))
+        for m in range(len(gbm_final)):
+            all_intpreds[m]=counterfactualSim(gbm_final[m], X.copy(), i, l) * y.std() + y.mean()
+        interrestab.at[i,l]=all_intpreds.mean().mean()
+
+interrestab.columns=['Lowest', 'Low', 'High', 'Highest']
+
+interrestab.index=['Physical inactivity', 'Screen time', 'Peer problems']
+interrestab_long = interrestab.melt(var_name='Column', value_name='Value')
+interrestab_long['Intervention'] = interrestab.index.to_list()*interrestab.shape[1]
+
+plt.figure(figsize=(8, 6))
+ax=sns.barplot(data=interrestab_long, x='Column', y='Value', hue='Intervention', palette=['#1e1e24', '#92140c', '#F5EFDC'])
+plt.ylim([1.8,2.35])
+plt.xlabel('')
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.ylabel('Predicted mental health problems',fontsize=14)
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles=handles, labels=labels)
+plt.title('MC')
+plt.savefig('pdps_mc.png', dpi=450)
